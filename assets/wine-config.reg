@@ -1,0 +1,18 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CURRENT_USER\Software\Wine\DllOverrides]
+"msvcp140"="native,builtin"
+"vcruntime140"="native,builtin"
+"vcruntime140_1"="native,builtin"
+
+[HKEY_CURRENT_USER\Software\Wine\Direct3D]
+"DirectDrawRenderer"="opengl"
+"OffscreenRenderingMode"="backbuffer"
+"UseGLSL"="enabled"
+"MaxVersionGL"="3.3"
+
+[HKEY_CURRENT_USER\Software\Wine\X11 Driver]
+"Decorated"="Y"
+"Managed"="Y"
+"UseTakeFocus"="N"
+"UseSystemCursor"="N"
