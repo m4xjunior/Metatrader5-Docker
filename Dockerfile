@@ -1,4 +1,4 @@
-FROM alpine:3.15 AS st-builder
+FROM alpine:3.19 AS st-builder
 
 RUN apk add --no-cache make gcc git freetype-dev \
             fontconfig-dev musl-dev xproto libx11-dev \
@@ -7,7 +7,7 @@ RUN git clone https://github.com/DenisKramer/st.git /work
 WORKDIR /work
 RUN make
 
-FROM alpine:3.15 AS xdummy-builder
+FROM alpine:3.19 AS xdummy-builder
 
 RUN apk add --no-cache make gcc freetype-dev \
             fontconfig-dev musl-dev xproto libx11-dev \
@@ -27,17 +27,14 @@ ENV DISPLAY :0
 ENV USER=root
 ENV PASSWORD=root
 
-
-# Basic init and admin tools
-RUN apk --no-cache add supervisor sudo wget \
+# Update package index and install basic tools
+RUN apk update && apk --no-cache add supervisor sudo wget \
     && echo "$USER:$PASSWORD" | /usr/sbin/chpasswd \
     && rm -rf /apk /tmp/* /var/cache/apk/*
 
-# Install X11 server and dummy device
+# Install X11 server and dummy device with updated repositories
 RUN apk add --no-cache xorg-server xf86-video-dummy \
-    && apk add libressl3.1-libcrypto --no-cache --repository http://dl-3.alpinelinux.org/alpine/edge/main/ \
-    && apk add libressl3.1-libssl --no-cache --repository http://dl-3.alpinelinux.org/alpine/edge/main/ \
-    && apk add x11vnc --no-cache --repository http://dl-3.alpinelinux.org/alpine/edge/community/ \
+    && apk add --no-cache x11vnc \
     && rm -rf /apk /tmp/* /var/cache/apk/*
 COPY --from=xdummy-builder /usr/bin/Xdummy.so /usr/bin/Xdummy.so
 COPY assets/xorg.conf /etc/X11/xorg.conf
@@ -57,6 +54,7 @@ COPY assets/openbox/mayday/thesis /usr/share/themes/thesis
 COPY assets/openbox/rc.xml /etc/xdg/openbox/rc.xml
 COPY assets/openbox/menu.xml /etc/xdg/openbox/menu.xml
 COPY Metatrader /root/Metatrader
+
 # Login Manager
 RUN apk --no-cache add slim consolekit \
     && rm -rf /apk /tmp/* /var/cache/apk/*
@@ -69,9 +67,7 @@ RUN apk add --no-cache font-noto \
     && rm -rf /apk /tmp/* /var/cache/apk/*
 COPY assets/fonts.conf /etc/fonts/fonts.conf
 
-
-
-# st  as terminal
+# st as terminal
 RUN apk add --no-cache freetype fontconfig xproto libx11 libxft libxext ncurses \
     && rm -rf /apk /tmp/* /var/cache/apk/*
 COPY --from=st-builder /work/st /usr/bin/st
@@ -87,11 +83,11 @@ COPY assets/xinit/xinitrc.d /etc/X11/xinit/xinitrc.d
 COPY assets/x11vnc-session.sh /root/x11vnc-session.sh
 COPY assets/start.sh /root/start.sh
 
+# Install Wine and Samba with updated packages
+RUN apk update && apk add --no-cache samba-winbind wine && ln -s /usr/bin/wine64 /usr/bin/wine
 
-RUN apk update && apk add samba-winbind wine && ln -s /usr/bin/wine64 /usr/bin/wine
-
-
-
+# Set proper permissions for MetaTrader
+RUN chmod +x /root/Metatrader/terminal64.exe
 
 WORKDIR /$HOME/
 EXPOSE 5900 15555 15556 15557 15558
